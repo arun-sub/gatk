@@ -12,7 +12,10 @@ workflow CreateArrayImportTsvs {
 
     Int? preemptible_tries
     File? gatk_override
+    String? docker
   }
+
+  String docker_final = select_first([docker, "us.gcr.io/broad-gatk/gatk:4.1.7.0"])
  
   call CreateImportTsvs {
     input:
@@ -23,7 +26,8 @@ workflow CreateArrayImportTsvs {
       sampleMap = sampleMap,
       output_directory = output_directory,
       gatk_override = gatk_override,
-      preemptible_tries = preemptible_tries
+      preemptible_tries = preemptible_tries,
+      docker = docker_final
   }
   output {
     File metadata_tsv = CreateImportTsvs.metadata_tsv
@@ -44,6 +48,7 @@ task CreateImportTsvs {
     # runtime
     Int? preemptible_tries
     File? gatk_override
+    String docker
   }
 
   Int disk_size = ceil(size(input_vcf, "GB") * 2.5) + 20
@@ -72,7 +77,7 @@ task CreateImportTsvs {
       gsutil cp *.tsv ~{output_directory}
   >>>
   runtime {
-      docker: "us.gcr.io/broad-gatk/gatk:4.1.7.0"
+      docker: docker
       memory: "4 GB"
       disks: "local-disk " + disk_size + " HDD"
       preemptible: select_first([preemptible_tries, 5])

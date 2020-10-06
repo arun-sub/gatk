@@ -1,0 +1,11 @@
+{
+  "ImportArrays.output_directory":"gs://variantstore-test/__UUID__/",
+  "ImportArrays.input_vcfs":["/home/travis/build/broadinstitute/gatk/src/test/resources/org/broadinstitute/hellbender/tools/variantdb/arrays/array.vcf"],
+  "ImportArrays.probe_info_file":"/home/travis/build/broadinstitute/gatk/src/test/resources/org/broadinstitute/hellbender/tools/variantdb/arrays/expected_probe_info.csv",
+  "ImportArrays.sampleMap":"/home/travis/build/broadinstitute/gatk/src/test/resources/org/broadinstitute/hellbender/tools/variantdb/arrays/sampleMap.csv",
+  "ImportArrays.project_id": "broad-dsde-dev",
+  "ImportArrays.dataset_name": "temp_tables",
+  "ImportArrays.docker": "__GATK_DOCKER__",
+  "ImportArrays.LoadArrayTsvsToBQ.for_testing_only": "gcloud auth activate-service-account --key-file $GOOGLE_APPLICATION_CREDENTIALS",
+  "ImportArrays.LoadArrayTsvsToBQ.uuid_table_name_for_testing": "__UUID__"
+}
