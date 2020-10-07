@@ -9,9 +9,11 @@ workflow ImportArrays {
     String? probe_info_table
     File? probe_info_file
     String output_directory
-    File sampleMap
+    File sample_map
     String project_id
     String dataset_name
+    File sample_list_schema
+    File array_data_schema
 
     Int? preemptible_tries
     File? gatk_override
@@ -32,7 +34,7 @@ workflow ImportArrays {
         probe_info_table = probe_info_table,
         probe_info_file = probe_info_file,
         output_directory = output_directory,
-        sampleMap = sampleMap,
+        sample_map = sample_map,
         preemptible_tries = preemptible_tries,
         gatk_override = gatk_override,
         docker = docker
@@ -46,6 +48,8 @@ workflow ImportArrays {
       storage_location = output_directory,
       #TODO: figure out how to determine table_id
       table_id = 1,
+      sample_list_schema = sample_list_schema,
+      array_data_schema = array_data_schema,
       docker = docker_final
   }
 }
@@ -56,6 +60,8 @@ task LoadArrayTsvsToBQ {
     String dataset_name
     String storage_location
     String table_id
+    File sample_list_schema
+    File array_data_schema
 
     #runtime
     String docker
@@ -91,8 +97,8 @@ task LoadArrayTsvsToBQ {
     fi
 
     # schema and TSV header need to be the same order
-    RAW_SCHEMA="raw_array_schema.json"
-    SAMPLE_LIST_SCHEMA="arrays_sample_list_schema.json"
+    RAW_SCHEMA=~{array_data_schema}
+    SAMPLE_LIST_SCHEMA=~{sample_list_schema}
 
     # create a metadata table and load
     SAMPLE_LIST_TABLE=$DATASET_NAME.sample_list

@@ -8,7 +8,7 @@ workflow CreateArrayImportTsvs {
     String? probe_info_table
     File? probe_info_file
     String output_directory
-    File sampleMap
+    File sample_map
 
     Int? preemptible_tries
     File? gatk_override
@@ -23,7 +23,7 @@ workflow CreateArrayImportTsvs {
       input_metrics = input_metrics,
       probe_info_table = probe_info_table,
       probe_info_file = probe_info_file,
-      sampleMap = sampleMap,
+      sample_map = sample_map,
       output_directory = output_directory,
       gatk_override = gatk_override,
       preemptible_tries = preemptible_tries,
@@ -43,7 +43,7 @@ task CreateImportTsvs {
     String? probe_info_table
     File? probe_info_file
     String output_directory
-    File sampleMap
+    File sample_map
 
     # runtime
     Int? preemptible_tries
@@ -71,7 +71,7 @@ task CreateImportTsvs {
         ~{"-QCF " + input_metrics} \
         ~{"--probe-info-file " + probe_info_file} \
         ~{"--probe-info-table " + probe_info_table} \
-        -SNM ~{sampleMap} \
+        -SNM ~{sample_map} \
         --ref-version 37
         
       gsutil cp *.tsv ~{output_directory}
