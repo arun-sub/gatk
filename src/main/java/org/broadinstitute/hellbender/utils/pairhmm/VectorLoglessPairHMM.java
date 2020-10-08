@@ -19,6 +19,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.nio.charset.StandardCharsets;
+
 /**
  * Class for performing the pair HMM for global alignment using AVX instructions contained in a native shared library.
  */
@@ -45,6 +47,8 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
     private static final Logger logger = LogManager.getLogger(VectorLoglessPairHMM.class);
     private long threadLocalSetupTimeDiff = 0;
     private long pairHMMSetupTime = 0;
+    private long nPairHMMBatches = 0;
+    private static final long MAX_PAIR_HMM_BATCHES = 1000000;
 
     private final PairHMMNativeBinding pairHmm;
 
@@ -129,6 +133,12 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
         }
         int readListSize = processedReads.size();
         int numHaplotypes = logLikelihoods.numberOfAlleles();
+
+        if (nPairHMMBatches < MAX_PAIR_HMM_BATCHES) {
+            // # Reads # Haplotypes
+            System.err.println("[INPUT] " + readListSize + " " + numHaplotypes);
+        }
+        
         ReadDataHolder[] readDataArray = new ReadDataHolder[readListSize];
         int idx = 0;
         for (GATKRead read : processedReads) {
@@ -138,7 +148,28 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
             readDataArray[idx].insertionGOP = ReadUtils.getBaseInsertionQualities(read);
             readDataArray[idx].deletionGOP = ReadUtils.getBaseDeletionQualities(read);
             readDataArray[idx].overallGCP = gcp.get(read);
+
+
+            if (nPairHMMBatches < MAX_PAIR_HMM_BATCHES) {
+                String readBases = "", readQuals = "", insertionGOP = "", deletionGOP = "", overallGCP = "";
+                for (int i = 0; i < readDataArray[idx].readBases.length; i++) {
+                    readBases += (char)(readDataArray[idx].readBases[i]);
+                    readQuals += (char)(readDataArray[idx].readQuals[i] + 33);
+                    insertionGOP += (char)(readDataArray[idx].insertionGOP[i] + 33);
+                    deletionGOP += (char)(readDataArray[idx].deletionGOP[i] + 33);
+                    overallGCP += (char)(readDataArray[idx].overallGCP[i] + 33);
+                }
+                // Read bases, qualities, insertion GOP, deletion GOP, GCP
+                System.err.println("[INPUT] " + readBases + " " + readQuals + " " + insertionGOP + " " + deletionGOP + " " + overallGCP); 
+            }
+            
             ++idx;
+        }
+
+        if (nPairHMMBatches < MAX_PAIR_HMM_BATCHES) {
+            for (final Haplotype haplotype : logLikelihoods.alleles()) {
+                System.err.println("[INPUT] " + new String(haplotype.getBases(), StandardCharsets.UTF_8));
+            }
         }
 
         mLogLikelihoodArray = new double[readListSize * numHaplotypes];      //to store results
@@ -159,10 +190,16 @@ public final class VectorLoglessPairHMM extends LoglessPairHMM {
                 //get idx of current haplotype in the list and use this idx to get the right likelihoodValue
                 final int idxInsideHaplotypeList = haplotypeToHaplotypeListIdxMap.get(haplotype);
                 logLikelihoods.set(hapIdx, r, mLogLikelihoodArray[readIdx + idxInsideHaplotypeList]);
+                if (nPairHMMBatches < MAX_PAIR_HMM_BATCHES) {
+                    System.err.println("[OUTPUT] " + mLogLikelihoodArray[readIdx + idxInsideHaplotypeList]);
+                }
                 ++hapIdx;
             }
             readIdx += numHaplotypes;
         }
+        
+        nPairHMMBatches++;
+
         if (doProfiling) {
             threadLocalPairHMMComputeTimeDiff = (System.nanoTime() - startTime);
             pairHMMComputeTime += threadLocalPairHMMComputeTimeDiff;
